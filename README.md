@@ -1,7 +1,8 @@
 # crud_mascotas_arquitectura_capas_python_oracle .
-# Programa: Almacén de Mascotas — Arquitectura por capas (Modelo / Repositorio / Servicio / Vista / Configuración)
 
 <img width="203" height="193" alt="image" src="https://github.com/user-attachments/assets/acd0ce8a-579d-497b-a76e-797430d0bb13" />  
+
+# Programa: Almacén de Mascotas — Arquitectura por capas (Modelo / Repositorio / Servicio / Vista / Configuración)
 
 Este documento contiene el programa completo en Python con arquitectura por capas que realiza un **CRUD de mascotas** y persiste la información en una base de datos **Oracle**. Incluye:
 
