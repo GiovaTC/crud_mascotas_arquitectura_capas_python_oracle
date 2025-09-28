@@ -58,28 +58,33 @@ def ver_por_id():
         print("Mascota no encontrada.")
 
 def actualizar():
-    id_ = input_non_empty("ID a actualizar: ")
-    m = svc.obtener_mascota(int(id_))
+    id_ = input("Ingrese ID de la mascota a actualizar: ")
+    m = svc.buscar_por_id(int(id_))   # 👈 corrección aquí
     if not m:
-        print("No existe mascota con ese ID.")
+        print("Mascota no encontrada.")
         return
-    print("Dejar vacío para mantener el valor actual.")
-    nombre = input(f"Nombre [{m.nombre}]: ").strip() or m.nombre
-    especie = input(f"Especie [{m.especie}]: ").strip() or m.especie
-    raza = input(f"Raza [{m.raza}]: ").strip() or m.raza
-    edad = input(f"Edad [{m.edad}]: ").strip()
-    peso = input(f"Peso [{m.peso}]: ").strip()
-    obs = input(f"Observaciones [{m.observaciones}]: ").strip() or m.observaciones
+
+    print("Deje en blanco para mantener el valor actual.")
+    nombre = input(f"Nombre ({m.nombre}): ") or m.nombre
+    especie = input(f"Especie ({m.especie}): ") or m.especie
+    raza = input(f"Raza ({m.raza}): ") or m.raza
+    edad = input(f"Edad ({m.edad}): ") or m.edad
+    peso = input(f"Peso ({m.peso}): ") or m.peso
+    observaciones = input(f"Observaciones ({m.observaciones}): ") or m.observaciones
+
     data = {
         "nombre": nombre,
         "especie": especie,
         "raza": raza,
-        "edad": int(edad) if edad else m.edad,
-        "peso": float(peso) if peso else m.peso,
-        "observaciones": obs
+        "edad": int(edad),
+        "peso": float(peso),
+        "observaciones": observaciones,
     }
-    ok = svc.actualizar_mascota(int(id_), data)
-    print("Actualizado." if ok else "No se pudo actualizar.")
+
+    if svc.actualizar_mascota(int(id_), data):
+        print("Mascota actualizada con éxito.")
+    else:
+        print("Error al actualizar.")
 
 def eliminar():
     id_ = input_non_empty("ID a eliminar: ")
