@@ -49,14 +49,13 @@ def crear():
     print(f"Mascota creada (id={m.id}).")
 
 def ver_por_id():
-    id_ = input_non_empty("ID de la mascota: ")
-    m = svc.obtener_mascota(int(id_))
-    if not m:
+    id_ = input("Ingrese ID de la mascota: ")
+    m = svc.buscar_por_id(int(id_))   # 👈 corrección aquí
+    if m:
+        print(f"[{m.id}] {m.nombre} ({m.especie}, {m.raza}), "
+              f"Edad: {m.edad}, Peso: {m.peso}kg, Obs: {m.observaciones}")
+    else:
         print("Mascota no encontrada.")
-        return
-    print("Detalles:")
-    for k, v in m.__dict__.items():
-        print(f"  {k}: {v}")
 
 def actualizar():
     id_ = input_non_empty("ID a actualizar: ")

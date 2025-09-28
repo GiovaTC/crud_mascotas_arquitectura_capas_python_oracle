@@ -1,1 +1,12 @@
-[]
+[
+  {
+    "id": 1,
+    "nombre": "firulais",
+    "especie": "perro",
+    "raza": "labrador",
+    "edad": 3,
+    "peso": 18.5,
+    "fecha_ingreso": "2025-09-27T19:23:05.799490",
+    "observaciones": "vacunado, muy jugueton"
+  }
+]

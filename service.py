@@ -54,3 +54,5 @@ class MascotaService:
     def buscar_por_nombre(self, nombre):
         return self.repo.search_by_name(nombre)
 
+    def buscar_por_id(self, id):
+        return self.repo.get_by_id(id)
