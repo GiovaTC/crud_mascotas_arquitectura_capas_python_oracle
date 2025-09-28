@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # repository.py
 import json
 from typing import List, Optional
@@ -6,19 +7,27 @@ from config import get_connection
 from datetime import datetime
 import os
 
+# Archivo de respaldo local
 BACKUP_FILE = "pets_backup.json"
 
+
 class MascotaRepository:
+    """
+    Repositorio de mascotas con soporte para:
+    - CRUD en Oracle
+    - Respaldo local en archivo JSON (si Oracle no está disponible)
+    """
+
     def __init__(self):
         self._use_db = True
-        # probar conexión al iniciarse
+        # Intentar conexión al iniciarse
         try:
             conn = get_connection()
             conn.close()
         except Exception as e:
             print(f"[WARN] No se pudo conectar a Oracle: {e}. Usando respaldo local ({BACKUP_FILE}).")
             self._use_db = False
-            # asegurarse de que el archivo exista
+            # Asegurar que el archivo de respaldo exista
             if not os.path.exists(BACKUP_FILE):
                 with open(BACKUP_FILE, "w", encoding="utf-8") as f:
                     json.dump([], f, ensure_ascii=False, indent=2)
@@ -29,6 +38,7 @@ class MascotaRepository:
     def create(self, mascota: Mascota) -> Mascota:
         if not self._use_db:
             return self._create_local(mascota)
+
         conn = get_connection()
         try:
             with conn.cursor() as cur:
@@ -46,8 +56,6 @@ class MascotaRepository:
                     "fecha_ingreso": fecha,
                     "observaciones": mascota.observaciones
                 })
-                # Si quieres recuperar el ID generado usando RETURNING id INTO :rid,
-                # es posible usar rid = cur.var(int) y cur.execute(..., rid=rid) — ver nota al final.
             conn.commit()
             return mascota
         except Exception as e:
@@ -61,21 +69,25 @@ class MascotaRepository:
     def get_all(self) -> List[Mascota]:
         if not self._use_db:
             return self._get_all_local()
+
         conn = get_connection()
         mascotas = []
         try:
             with conn.cursor() as cur:
-                cur.execute("SELECT id, nombre, especie, raza, edad, peso, fecha_ingreso, observaciones FROM mascotas ORDER BY id")
+                cur.execute("""
+                    SELECT id, nombre, especie, raza, edad, peso, fecha_ingreso, observaciones
+                    FROM mascotas ORDER BY id
+                """)
                 for r in cur:
                     m = Mascota(
-                        id = int(r[0]) if r[0] is not None else None,
-                        nombre = r[1],
-                        especie = r[2],
-                        raza = r[3],
-                        edad = int(r[4]) if r[4] is not None else None,
-                        peso = float(r[5]) if r[5] is not None else None,
-                        fecha_ingreso = r[6],
-                        observaciones = r[7]
+                        id=int(r[0]) if r[0] else None,
+                        nombre=r[1],
+                        especie=r[2],
+                        raza=r[3],
+                        edad=int(r[4]) if r[4] else None,
+                        peso=float(r[5]) if r[5] else None,
+                        fecha_ingreso=r[6],
+                        observaciones=r[7]
                     )
                     mascotas.append(m)
             return mascotas
@@ -89,22 +101,26 @@ class MascotaRepository:
     def get_by_id(self, id_: int) -> Optional[Mascota]:
         if not self._use_db:
             return self._get_by_id_local(id_)
+
         conn = get_connection()
         try:
             with conn.cursor() as cur:
-                cur.execute("SELECT id, nombre, especie, raza, edad, peso, fecha_ingreso, observaciones FROM mascotas WHERE id = :id", {"id": id_})
+                cur.execute("""
+                    SELECT id, nombre, especie, raza, edad, peso, fecha_ingreso, observaciones
+                    FROM mascotas WHERE id = :id
+                """, {"id": id_})
                 r = cur.fetchone()
                 if not r:
                     return None
                 return Mascota(
-                    id = int(r[0]),
-                    nombre = r[1],
-                    especie = r[2],
-                    raza = r[3],
-                    edad = int(r[4]) if r[4] is not None else None,
-                    peso = float(r[5]) if r[5] is not None else None,
-                    fecha_ingreso = r[6],
-                    observaciones = r[7]
+                    id=int(r[0]),
+                    nombre=r[1],
+                    especie=r[2],
+                    raza=r[3],
+                    edad=int(r[4]) if r[4] else None,
+                    peso=float(r[5]) if r[5] else None,
+                    fecha_ingreso=r[6],
+                    observaciones=r[7]
                 )
         except Exception as e:
             print(f"[ERROR] Al obtener por id desde Oracle: {e}.")
@@ -116,12 +132,14 @@ class MascotaRepository:
     def update(self, mascota: Mascota) -> bool:
         if not self._use_db:
             return self._update_local(mascota)
+
         conn = get_connection()
         try:
             with conn.cursor() as cur:
                 sql = """
                 UPDATE mascotas
-                SET nombre = :nombre, especie = :especie, raza = :raza, edad = :edad, peso = :peso, observaciones = :observaciones
+                SET nombre = :nombre, especie = :especie, raza = :raza,
+                    edad = :edad, peso = :peso, observaciones = :observaciones
                 WHERE id = :id
                 """
                 cur.execute(sql, {
@@ -146,6 +164,7 @@ class MascotaRepository:
     def delete(self, id_: int) -> bool:
         if not self._use_db:
             return self._delete_local(id_)
+
         conn = get_connection()
         try:
             with conn.cursor() as cur:
@@ -161,7 +180,7 @@ class MascotaRepository:
             conn.close()
 
     # -----------------------
-    # Backup local JSON (respaldo)
+    # Métodos de respaldo JSON
     # -----------------------
     def _read_backup(self):
         try:
@@ -196,17 +215,16 @@ class MascotaRepository:
         data = self._read_backup()
         result = []
         for r in data:
-            m = Mascota(
-                id = r.get("id"),
-                nombre = r.get("nombre"),
-                especie = r.get("especie"),
-                raza = r.get("raza"),
-                edad = r.get("edad"),
-                peso = r.get("peso"),
-                fecha_ingreso = r.get("fecha_ingreso"),
-                observaciones = r.get("observaciones")
-            )
-            result.append(m)
+            result.append(Mascota(
+                id=r.get("id"),
+                nombre=r.get("nombre"),
+                especie=r.get("especie"),
+                raza=r.get("raza"),
+                edad=r.get("edad"),
+                peso=r.get("peso"),
+                fecha_ingreso=r.get("fecha_ingreso"),
+                observaciones=r.get("observaciones")
+            ))
         return result
 
     def _get_by_id_local(self, id_):
@@ -214,14 +232,14 @@ class MascotaRepository:
         for r in data:
             if int(r.get("id")) == int(id_):
                 return Mascota(
-                    id = r.get("id"),
-                    nombre = r.get("nombre"),
-                    especie = r.get("especie"),
-                    raza = r.get("raza"),
-                    edad = r.get("edad"),
-                    peso = r.get("peso"),
-                    fecha_ingreso = r.get("fecha_ingreso"),
-                    observaciones = r.get("observaciones")
+                    id=r.get("id"),
+                    nombre=r.get("nombre"),
+                    especie=r.get("especie"),
+                    raza=r.get("raza"),
+                    edad=r.get("edad"),
+                    peso=r.get("peso"),
+                    fecha_ingreso=r.get("fecha_ingreso"),
+                    observaciones=r.get("observaciones")
                 )
         return None
 
